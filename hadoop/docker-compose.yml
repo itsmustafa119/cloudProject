@@ -1,0 +1,49 @@
+# =====================================================================
+# Hadoop stack — Phase 1: MapReduce processing
+#
+# Run from the project root:
+#   docker compose -f hadoop/docker-compose.yml up -d
+#
+# The project root is mounted as /project inside the namenode container
+# so you can run the MapReduce pipeline directly from inside it:
+#
+#   docker exec -it namenode bash
+#   bash /project/scripts/run_mapreduce.sh
+# =====================================================================
+services:
+  namenode:
+    image: registry.docker.ir/bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    volumes:
+      - ../data/namenode:/hadoop/dfs/name
+      - ./init.sh:/init.sh
+      - ../:/project
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "9870:9870"
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 65536
+    command: ["sh", "/init.sh"]
+
+  datanode:
+    image: registry.docker.ir/bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    depends_on:
+      - namenode
+    volumes:
+      - ../data/datanode:/hadoop/dfs/data
+      - ./init.sh:/init.sh
+    env_file:
+      - ./hadoop.env
+    ports:
+      - "9864:9864"
+    ulimits:
+      nofile:
+        soft: 4096
+        hard: 65536
+    command: ["sh", "/init.sh"]
