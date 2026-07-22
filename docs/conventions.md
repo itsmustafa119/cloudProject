@@ -34,8 +34,10 @@ Nginx forwards these effective values to the selected backend:
   generated request ID.
 - `X-Client-Country`: preserve a nonempty client value; otherwise use
   `Unknown`.
-- `X-Scenario`: preserve a nonempty client value after lowercase
-  normalization; otherwise use `normal`.
+- `X-Scenario`: canonicalize the supported values `normal`, `slow`, and
+  `server_error` case-insensitively; default an empty value to `normal`.
+  Unknown nonempty values remain visible in the gateway log and are normalized
+  by the backend service.
 
 The effective values, not blank originals, are written to the gateway and
 service logs. Supported traffic scenarios are `normal`, `slow`, and

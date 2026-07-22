@@ -8,10 +8,11 @@ Project planning and conventions are documented before implementation begins:
 - [Implementation plan](docs/implementation-plan.md)
 - [Architecture and data conventions](docs/conventions.md)
 
-Steps 1 and 2 are complete, and Step 3 container files are implemented. A real
-Docker build still needs to be run on a machine with Docker installed. Nginx,
-traffic generation, MapReduce jobs, generated outputs, and the optional Spark
-extension are implemented in later steps.
+Steps 1 and 2 are complete, and the Step 3 service containers and Step 4 Nginx
+gateway are implemented. Real container builds and `nginx -t` still need to run
+on a machine with Docker or Nginx installed. Traffic generation, MapReduce
+jobs, generated outputs, and the optional Spark extension are implemented in
+later steps.
 
 ## Current verification
 

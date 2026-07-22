@@ -51,6 +51,9 @@ absolute paths.
 
 ## Step 4 - Nginx gateway
 
+Status: Implemented; `nginx -t` and proxy runtime verification require Nginx
+or Docker.
+
 - Create a complete `nginx.conf` with upstreams and route-based proxying.
 - Forward request ID, country, and scenario headers.
 - Emit the mandatory JSON Lines gateway schema.
