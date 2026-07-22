@@ -64,6 +64,8 @@ backend records by request ID.
 
 ## Step 5 - Application Docker Compose stack
 
+Status: Implemented; Compose build and runtime verification require Docker.
+
 - Create the root Compose file for the three backends and Nginx.
 - Configure network, dependencies, health checks, ports, and log volumes.
 - Validate `docker compose up --build` and `nginx -t`.

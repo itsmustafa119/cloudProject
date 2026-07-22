@@ -1,0 +1,71 @@
+name: phase1-world-cup-analytics
+
+services:
+  match-service:
+    build:
+      context: ./match-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_PORT: "8000"
+      SERVICE_LOG_DIR: /data/service_logs
+    volumes:
+      - ./data/service_logs:/data/service_logs
+    expose:
+      - "8000"
+    networks:
+      - app-network
+
+  team-service:
+    build:
+      context: ./team-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_PORT: "8000"
+      SERVICE_LOG_DIR: /data/service_logs
+    volumes:
+      - ./data/service_logs:/data/service_logs
+    expose:
+      - "8000"
+    networks:
+      - app-network
+
+  stadium-service:
+    build:
+      context: ./stadium-service
+      dockerfile: Dockerfile
+    environment:
+      SERVICE_PORT: "8000"
+      SERVICE_LOG_DIR: /data/service_logs
+    volumes:
+      - ./data/service_logs:/data/service_logs
+    expose:
+      - "8000"
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:1.28.0-alpine
+    depends_on:
+      match-service:
+        condition: service_healthy
+      team-service:
+        condition: service_healthy
+      stadium-service:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./data/nginx:/var/log/nginx
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
