@@ -8,10 +8,10 @@ Project planning and conventions are documented before implementation begins:
 - [Implementation plan](docs/implementation-plan.md)
 - [Architecture and data conventions](docs/conventions.md)
 
-Steps 1 and 2 are complete: the project contracts are documented and all three
-services emit structured request logs. Containers, Nginx, traffic generation,
-MapReduce jobs, generated outputs, and the optional Spark extension are
-implemented in later steps.
+Steps 1 and 2 are complete, and Step 3 container files are implemented. A real
+Docker build still needs to be run on a machine with Docker installed. Nginx,
+traffic generation, MapReduce jobs, generated outputs, and the optional Spark
+extension are implemented in later steps.
 
 ## Current verification
 
@@ -19,4 +19,12 @@ Run the structured-logging unit tests from the repository root:
 
 ```bash
 python -m unittest discover -s tests -v
+```
+
+Build the backend images from the repository root:
+
+```bash
+docker build -t phase1-match-service ./match-service
+docker build -t phase1-team-service ./team-service
+docker build -t phase1-stadium-service ./stadium-service
 ```

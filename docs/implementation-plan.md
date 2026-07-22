@@ -39,6 +39,8 @@ record.
 
 ## Step 3 - Service containerization
 
+Status: Implemented; image build and runtime verification require Docker.
+
 - Add a dependency file and Dockerfile for each backend.
 - Bind applications to `0.0.0.0:8000` inside their containers.
 - Persist service logs through a shared host volume.
