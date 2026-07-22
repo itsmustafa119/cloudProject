@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local Hadoop state (final analytical outputs remain trackable)
+data/namenode/
+data/datanode/
+
+# Optional Spark runtime state
+checkpoints/
+
+# Temporary files
+tmp/
+*.tmp
