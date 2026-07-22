@@ -57,6 +57,11 @@ under `/project` in the Hadoop NameNode container.
 | Pipeline scripts | `scripts/` |
 | Local results | `outputs/` |
 
+Backend services resolve the default log directory from the repository layout.
+`SERVICE_LOG_DIR` may override that directory at runtime, which allows a later
+container to mount the same shared log location without embedding a path from a
+developer's machine.
+
 Log producers append UTF-8 JSON Lines: one compact JSON object and one newline
 per request. Timestamps use UTC ISO-8601 with a `Z` suffix. Status and timing
 values are numeric, not strings, except raw Nginx `request_time_sec`, which the

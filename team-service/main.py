@@ -7,16 +7,19 @@ Returns information about a FIFA World Cup 2026 national team.
 
 Phase 1 notes:
 * No database. Teams live in an in-memory dictionary.
-* This service must write a structured JSON Lines log to:
+* This service writes a structured JSON Lines log to:
       data/service_logs/team_service.log
-  Implement write_service_log() below to complete this requirement.
 * Response shape can be influenced via the X-Scenario header:
       X-Scenario: slow         -> add extra latency
       X-Scenario: server_error -> return 500
 """
+import json
 import os
 import random
+import threading
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -75,11 +78,27 @@ TEAMS = {
 }
 
 SERVICE_PORT = int(os.environ.get("SERVICE_PORT", "8000"))
+_DEFAULT_LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "service_logs"
+_LOG_LOCK = threading.Lock()
 
 
-def write_service_log(request_id, client_country, entity_value, status_code, processing_time_ms):
+def _scenario_from_request(request: Request):
+    """Return the normalized scenario forwarded by the gateway."""
+    return (request.headers.get("x-scenario", "normal").strip().lower()
+            or "normal")
+
+
+def _service_log_path():
+    """Resolve the host/project log directory, with a container override."""
+    configured_dir = os.environ.get("SERVICE_LOG_DIR")
+    log_dir = Path(configured_dir) if configured_dir else _DEFAULT_LOG_DIR
+    return log_dir / "team_service.log"
+
+
+def write_service_log(request_id, client_country, scenario, entity_value,
+                      status_code, processing_time_ms):
     """
-    TODO: Students must implement structured JSON Lines logging here.
+    Write one structured JSON Lines record for a completed lookup request.
 
     Required output file: data/service_logs/team_service.log
 
@@ -88,6 +107,7 @@ def write_service_log(request_id, client_country, entity_value, status_code, pro
       timestamp           ISO-8601 UTC string, e.g. datetime.utcnow().isoformat() + "Z"
       request_id          value of X-Request-ID header  (passed as argument)
       client_country      value of X-Client-Country header  (passed as argument)
+      scenario            normalized value of X-Scenario (schema extension)
       service             "team-service"
       endpoint            "/api/teams"
       entity_type         "team"
@@ -96,12 +116,33 @@ def write_service_log(request_id, client_country, entity_value, status_code, pro
       processing_time_ms  milliseconds elapsed since request start  (passed as argument)
       event_type          "team_lookup"
     """
-    pass
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "request_id": request_id,
+        "client_country": client_country,
+        "scenario": scenario,
+        "service": "team-service",
+        "endpoint": "/api/teams",
+        "entity_type": "team",
+        "entity_value": entity_value,
+        "status_code": int(status_code),
+        "processing_time_ms": max(0, int(processing_time_ms)),
+        "event_type": "team_lookup",
+    }
+    log_path = _service_log_path()
+    encoded_record = json.dumps(
+        record, ensure_ascii=False, separators=(",", ":")
+    )
+
+    with _LOG_LOCK:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8", newline="\n") as log_file:
+            log_file.write(encoded_record + "\n")
 
 
 def _apply_scenario(request: Request):
     """Shape the response based on X-Scenario. Returns a JSONResponse or None."""
-    scenario = request.headers.get("x-scenario", "normal").lower()
+    scenario = _scenario_from_request(request)
     if scenario == "slow":
         time.sleep(random.uniform(0.3, 1.1))
     else:
@@ -124,15 +165,16 @@ def get_team(request: Request, name: str = ""):
     started_at = time.perf_counter()
     request_id = request.headers.get("x-request-id", "")
     client_country = request.headers.get("x-client-country", "")
+    scenario = _scenario_from_request(request)
 
     forced = _apply_scenario(request)
     if forced is not None:
-        write_service_log(request_id, client_country, name,
+        write_service_log(request_id, client_country, scenario, name,
                           500, int((time.perf_counter() - started_at) * 1000))
         return forced
 
     if not name:
-        write_service_log(request_id, client_country, "",
+        write_service_log(request_id, client_country, scenario, "",
                           400, int((time.perf_counter() - started_at) * 1000))
         return JSONResponse(
             status_code=400,
@@ -144,11 +186,11 @@ def get_team(request: Request, name: str = ""):
         if team_name.lower() == name.lower():
             result = {"name": team_name}
             result.update(info)
-            write_service_log(request_id, client_country, team_name,
+            write_service_log(request_id, client_country, scenario, team_name,
                               200, int((time.perf_counter() - started_at) * 1000))
             return result
 
-    write_service_log(request_id, client_country, name,
+    write_service_log(request_id, client_country, scenario, name,
                       404, int((time.perf_counter() - started_at) * 1000))
     return JSONResponse(
         status_code=404,

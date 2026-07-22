@@ -15,6 +15,8 @@ The repository initially provides:
 
 ## Step 1 - Structure and conventions
 
+Status: Complete.
+
 - Create the planned directory skeleton.
 - Fix service names, ports, paths, schemas, MapReduce key formats, default
   header behavior, tie-breaking rules, and output column order.
@@ -24,6 +26,8 @@ Definition of done: `docs/conventions.md` is authoritative for subsequent
 steps and every planned top-level work area exists.
 
 ## Step 2 - Backend structured logging
+
+Status: Complete.
 
 - Implement `write_service_log()` in all three services.
 - Emit one JSON object per request to the service-specific JSON Lines file.

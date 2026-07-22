@@ -12,9 +12,8 @@ Phase 1 notes:
 * No database. Stadiums live in an in-memory list.
 * Each entry has a canonical `name` (city-based, e.g. "Dallas Stadium") and
   a `common_name` (the real venue name, e.g. "AT&T Stadium").
-* This service must write a structured JSON Lines log to:
+* This service writes a structured JSON Lines log to:
       data/service_logs/stadium_service.log
-  Implement write_service_log() below to complete this requirement.
 * entity_type depends on the query parameter used:
       name query  -> entity_type = "stadium",  entity_value = stadium name
       city query  -> entity_type = "city",     entity_value = city name
@@ -22,9 +21,13 @@ Phase 1 notes:
       X-Scenario: slow         -> add extra latency
       X-Scenario: server_error -> return 500
 """
+import json
 import os
 import random
+import threading
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -86,11 +89,27 @@ _CITY_ALIASES = {
 }
 
 SERVICE_PORT = int(os.environ.get("SERVICE_PORT", "8000"))
+_DEFAULT_LOG_DIR = Path(__file__).resolve().parent.parent / "data" / "service_logs"
+_LOG_LOCK = threading.Lock()
 
 
-def write_service_log(request_id, client_country, entity_type, entity_value, status_code, processing_time_ms):
+def _scenario_from_request(request: Request):
+    """Return the normalized scenario forwarded by the gateway."""
+    return (request.headers.get("x-scenario", "normal").strip().lower()
+            or "normal")
+
+
+def _service_log_path():
+    """Resolve the host/project log directory, with a container override."""
+    configured_dir = os.environ.get("SERVICE_LOG_DIR")
+    log_dir = Path(configured_dir) if configured_dir else _DEFAULT_LOG_DIR
+    return log_dir / "stadium_service.log"
+
+
+def write_service_log(request_id, client_country, scenario, entity_type,
+                      entity_value, status_code, processing_time_ms):
     """
-    TODO: Students must implement structured JSON Lines logging here.
+    Write one structured JSON Lines record for a completed lookup request.
 
     Required output file: data/service_logs/stadium_service.log
 
@@ -99,6 +118,7 @@ def write_service_log(request_id, client_country, entity_type, entity_value, sta
       timestamp           ISO-8601 UTC string, e.g. datetime.utcnow().isoformat() + "Z"
       request_id          value of X-Request-ID header  (passed as argument)
       client_country      value of X-Client-Country header  (passed as argument)
+      scenario            normalized value of X-Scenario (schema extension)
       service             "stadium-service"
       endpoint            "/api/stadiums"
       entity_type         "stadium" when querying by name, "city" when querying by city
@@ -108,7 +128,28 @@ def write_service_log(request_id, client_country, entity_type, entity_value, sta
       processing_time_ms  milliseconds elapsed since request start  (passed as argument)
       event_type          "stadium_lookup"
     """
-    pass
+    record = {
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "request_id": request_id,
+        "client_country": client_country,
+        "scenario": scenario,
+        "service": "stadium-service",
+        "endpoint": "/api/stadiums",
+        "entity_type": entity_type,
+        "entity_value": entity_value,
+        "status_code": int(status_code),
+        "processing_time_ms": max(0, int(processing_time_ms)),
+        "event_type": "stadium_lookup",
+    }
+    log_path = _service_log_path()
+    encoded_record = json.dumps(
+        record, ensure_ascii=False, separators=(",", ":")
+    )
+
+    with _LOG_LOCK:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        with log_path.open("a", encoding="utf-8", newline="\n") as log_file:
+            log_file.write(encoded_record + "\n")
 
 
 def _find_stadium(name: str):
@@ -129,7 +170,7 @@ def _find_by_city(city: str):
 
 def _apply_scenario(request: Request):
     """Shape the response based on X-Scenario. Returns a JSONResponse or None."""
-    scenario = request.headers.get("x-scenario", "normal").lower()
+    scenario = _scenario_from_request(request)
     if scenario == "slow":
         time.sleep(random.uniform(0.5, 1.5))
     else:
@@ -152,17 +193,25 @@ def get_stadium(request: Request, name: str = "", city: str = ""):
     started_at = time.perf_counter()
     request_id = request.headers.get("x-request-id", "")
     client_country = request.headers.get("x-client-country", "")
+    scenario = _scenario_from_request(request)
     entity_type = "stadium" if name else "city"
     entity_value = name if name else city
 
     forced = _apply_scenario(request)
     if forced is not None:
-        write_service_log(request_id, client_country, entity_type, entity_value,
-                          500, int((time.perf_counter() - started_at) * 1000))
+        write_service_log(
+            request_id,
+            client_country,
+            scenario,
+            entity_type,
+            entity_value,
+            500,
+            int((time.perf_counter() - started_at) * 1000),
+        )
         return forced
 
     if not name and not city:
-        write_service_log(request_id, client_country, "stadium", "",
+        write_service_log(request_id, client_country, scenario, "stadium", "",
                           400, int((time.perf_counter() - started_at) * 1000))
         return JSONResponse(
             status_code=400,
@@ -173,24 +222,24 @@ def get_stadium(request: Request, name: str = "", city: str = ""):
     if name:
         stadium = _find_stadium(name)
         if stadium is None:
-            write_service_log(request_id, client_country, "stadium", name,
+            write_service_log(request_id, client_country, scenario, "stadium", name,
                               404, int((time.perf_counter() - started_at) * 1000))
             return JSONResponse(
                 status_code=404,
                 content={"error": "stadium not found", "name": name},
             )
-        write_service_log(request_id, client_country, "stadium", name,
+        write_service_log(request_id, client_country, scenario, "stadium", name,
                           200, int((time.perf_counter() - started_at) * 1000))
         return stadium
 
     results = _find_by_city(city)
     if not results:
-        write_service_log(request_id, client_country, "city", city,
+        write_service_log(request_id, client_country, scenario, "city", city,
                           404, int((time.perf_counter() - started_at) * 1000))
         return JSONResponse(
             status_code=404,
             content={"error": "city not found", "city": city},
         )
-    write_service_log(request_id, client_country, "city", city,
+    write_service_log(request_id, client_country, scenario, "city", city,
                       200, int((time.perf_counter() - started_at) * 1000))
     return {"city": city, "count": len(results), "stadiums": results}
