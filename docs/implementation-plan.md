@@ -74,6 +74,8 @@ Definition of done: one command starts the complete API and gateway stack.
 
 ## Step 6 - Traffic generator
 
+Status: Complete; live gateway execution requires the Docker stack.
+
 - Implement `traffic-generator/generate.py` with request-count and Nginx URL
   arguments.
 - Generate unique request IDs and varied countries, entities, and scenarios.

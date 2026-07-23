@@ -8,11 +8,11 @@ Project planning and conventions are documented before implementation begins:
 - [Implementation plan](docs/implementation-plan.md)
 - [Architecture and data conventions](docs/conventions.md)
 
-Steps 1 and 2 are complete, and the Step 3 service containers, Step 4 Nginx
-gateway, and Step 5 application Compose stack are implemented. Real container
-builds and runtime checks still need to run on a machine with Docker installed.
-Traffic generation, MapReduce jobs, generated outputs, and the optional Spark
-extension are implemented in later steps.
+Steps 1 and 2 are complete, and Steps 3-6 implement the service containers,
+Nginx gateway, application Compose stack, and traffic generator. Real container
+builds and live traffic checks still need to run on a machine with Docker
+installed. MapReduce jobs, generated outputs, and the optional Spark extension
+are implemented in later steps.
 
 ## Current verification
 
@@ -44,3 +44,19 @@ Stop the application stack without deleting the persisted host logs:
 ```bash
 docker compose down
 ```
+
+Generate the required debug traffic through Nginx:
+
+```bash
+python traffic-generator/generate.py --requests 1000 --nginx-url http://localhost:8080
+```
+
+After debug verification, generate the final dataset:
+
+```bash
+python traffic-generator/generate.py --requests 100000 --nginx-url http://localhost:8080
+```
+
+Use `--seed`, `--workers`, `--timeout`, and `--progress-every` to control a
+run. The generator prints an in-memory execution summary; it does not create a
+trace file, and MapReduce must use Nginx and service logs as its inputs.
