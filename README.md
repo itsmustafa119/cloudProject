@@ -11,8 +11,9 @@ Project planning and conventions are documented before implementation begins:
 Steps 1 and 2 are complete, and Steps 3-6 implement the service containers,
 Nginx gateway, application Compose stack, and traffic generator. Real container
 builds and live traffic checks still need to run on a machine with Docker
-installed. MapReduce jobs, generated outputs, and the optional Spark extension
-are implemented in later steps.
+installed. The five MapReduce mapper/reducer stages are implemented; Hadoop
+execution automation, generated outputs, and the optional Spark extension are
+implemented in later steps.
 
 ## Current verification
 

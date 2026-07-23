@@ -103,6 +103,9 @@ Definition of done: a verified debug dataset is ready for Hadoop.
 
 ## Step 8 - Five Hadoop Streaming jobs
 
+Status: Mapper/reducer implementations complete; Hadoop execution and host
+output extraction are completed in Step 9.
+
 ### Job 1 - Parse and clean
 
 - Parse gateway and service JSONL, validate fields and numeric values, convert
