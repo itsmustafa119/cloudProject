@@ -60,3 +60,23 @@ python traffic-generator/generate.py --requests 100000 --nginx-url http://localh
 Use `--seed`, `--workers`, `--timeout`, and `--progress-every` to control a
 run. The generator prints an in-memory execution summary; it does not create a
 trace file, and MapReduce must use Nginx and service logs as its inputs.
+
+Prepare a clean run by stopping the stack and truncating the known logs in
+place. The explicit confirmation flag prevents accidental modification while
+containers may still be writing:
+
+```bash
+docker compose down
+python scripts/prepare_clean_run.py --confirm-stack-stopped
+docker compose up --build -d
+```
+
+After generating the 1,000-request debug dataset, validate both log families
+and their request-level correlation:
+
+```bash
+python scripts/validate_logs.py --expected-min-requests 1000
+```
+
+For the final dataset, repeat validation with
+`--expected-min-requests 100000` before starting MapReduce.

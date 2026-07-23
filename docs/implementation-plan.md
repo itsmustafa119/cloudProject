@@ -89,6 +89,9 @@ run supports at least 100,000 meaningful requests.
 
 ## Step 7 - Source-log validation
 
+Status: Validation and clean-run tooling complete; live debug-dataset
+validation requires the Docker stack.
+
 - Validate JSONL syntax and mandatory fields in both log families.
 - Correlate gateway and backend entries and compare statuses.
 - Confirm diversity across services, endpoints, countries, scenarios, entity
