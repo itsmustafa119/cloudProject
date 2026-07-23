@@ -81,3 +81,16 @@ python scripts/validate_logs.py --expected-min-requests 1000
 
 For the final dataset, repeat validation with
 `--expected-min-requests 100000` before starting MapReduce.
+
+Start the supplied Hadoop environment, enter the NameNode, and execute the
+complete five-job pipeline:
+
+```bash
+docker compose -f hadoop/docker-compose.yml up -d
+docker compose -f hadoop/docker-compose.yml exec namenode bash
+bash /project/scripts/run_mapreduce.sh
+```
+
+The pipeline uploads the four source logs to HDFS, runs all five Hadoop
+Streaming jobs, and writes every required CSV plus
+`outputs/final/summary.json` back to the host-mounted repository.

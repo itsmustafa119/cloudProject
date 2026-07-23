@@ -1,9 +1,11 @@
 """Local shuffle simulation for all five Hadoop Streaming jobs."""
 
+import importlib.util
 import json
 import os
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from urllib.parse import urlencode
@@ -14,6 +16,15 @@ MAPREDUCE = ROOT / "mapreduce"
 
 
 class MapReducePipelineTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        materializer_path = ROOT / "scripts" / "materialize_mapreduce_outputs.py"
+        spec = importlib.util.spec_from_file_location(
+            "phase1_output_materializer", materializer_path
+        )
+        cls.materializer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.materializer)
+
     def _run(self, relative_script, input_text):
         script = MAPREDUCE / relative_script
         environment = dict(os.environ)
@@ -155,6 +166,46 @@ class MapReducePipelineTests(unittest.TestCase):
         )
         self.assertEqual("Argentina", summary["predicted_champion"])
         self.assertEqual("France vs Argentina", summary["predicted_final"])
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            raw_paths = {}
+            for job_name, output in {
+                "job1": job1,
+                "job2": job2,
+                "job3": job3,
+                "job4": job4,
+                "job5": job5,
+            }.items():
+                raw_path = temp_root / f"{job_name}.txt"
+                raw_path.write_text(output, encoding="utf-8")
+                raw_paths[job_name] = raw_path
+
+            output_root = temp_root / "outputs"
+            created = self.materializer.materialize_all(raw_paths, output_root)
+            self.assertEqual(13, len(created))
+            expected_paths = (
+                "job1/cleaned_nginx_logs.csv",
+                "job1/cleaned_service_logs.csv",
+                "job1/invalid_logs.csv",
+                "job2/service_stats.csv",
+                "job2/endpoint_stats.csv",
+                "job2/scenario_stats.csv",
+                "job3/country_team_requests.csv",
+                "job3/country_matchday_requests.csv",
+                "job3/country_stadium_requests.csv",
+                "job4/popular_team_by_country.csv",
+                "job4/popular_matchday_by_country.csv",
+                "job4/popular_stadium_by_country.csv",
+                "final/summary.json",
+            )
+            for relative_path in expected_paths:
+                with self.subTest(output=relative_path):
+                    self.assertTrue((output_root / relative_path).is_file())
+            materialized_summary = json.loads(
+                (output_root / "final/summary.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(summary, materialized_summary)
 
     def test_streaming_programs_use_stdin_stdout_without_pandas(self):
         for job in (

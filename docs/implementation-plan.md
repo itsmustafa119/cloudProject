@@ -141,6 +141,9 @@ executions rather than Pandas or a local-only replacement.
 
 ## Step 9 - MapReduce pipeline automation
 
+Status: Complete; execution against the live Hadoop containers remains part of
+the end-to-end verification step.
+
 - Implement `scripts/run_mapreduce.sh`.
 - Upload inputs to HDFS, clear previous HDFS outputs, execute Jobs 1-5 in
   order, retrieve part files, add CSV headers exactly once, and validate final
