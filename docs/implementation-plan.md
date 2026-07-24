@@ -155,6 +155,9 @@ final summary on the host.
 
 ## Step 10 - End-to-end testing
 
+Status: Local deterministic end-to-end verification complete; clean container
+build, live header-forwarding checks, and real Hadoop execution require Docker.
+
 - Test APIs, header forwarding, both log schemas, malformed inputs, empty
   inputs, numeric aggregation, ties, and pipeline reruns.
 - Compare small Hadoop results with hand-calculated fixtures.

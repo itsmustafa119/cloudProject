@@ -1,0 +1,37 @@
+{
+  "job1_tag_counts": {
+    "NGINX": 6,
+    "SERVICE": 6,
+    "INVALID": 1
+  },
+  "service_stats": {
+    "match-service": ["2", "0", "1", "1", "2", "1.000000", "300.000"],
+    "stadium-service": ["2", "2", "0", "0", "0", "0.000000", "600.000"],
+    "team-service": ["2", "2", "0", "0", "0", "0.000000", "200.000"]
+  },
+  "popular_team_by_country": {
+    "Iran": ["Argentina", "1"]
+  },
+  "popular_matchday_by_country": {
+    "Germany": ["2026-06-13", "1"]
+  },
+  "popular_stadium_by_country": {
+    "Canada": ["stadium", "Alpha Stadium", "1"]
+  },
+  "summary": {
+    "total_requests": 6,
+    "most_requested_service": "match-service",
+    "highest_error_rate_service": "match-service",
+    "slowest_endpoint": "/api/stadiums",
+    "most_popular_team_overall": "Argentina",
+    "most_requested_match_day_overall": "2026-06-13",
+    "most_requested_stadium_overall": "Alpha Stadium",
+    "popular_team_by_country": {
+      "Iran": "Argentina"
+    },
+    "predicted_champion": "Argentina",
+    "predicted_final": "France vs Argentina",
+    "predicted_final_winner": "Argentina",
+    "predicted_final_stadium": "New York New Jersey Stadium"
+  }
+}

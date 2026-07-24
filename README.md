@@ -94,3 +94,22 @@ bash /project/scripts/run_mapreduce.sh
 The pipeline uploads the four source logs to HDFS, runs all five Hadoop
 Streaming jobs, and writes every required CSV plus
 `outputs/final/summary.json` back to the host-mounted repository.
+
+Run the deterministic end-to-end fixture before using the large live dataset:
+
+```bash
+python scripts/verify_local_e2e.py
+```
+
+This command executes all five mapper/reducer pairs with a local Hadoop
+shuffle/sort simulation, checks numeric aggregation and deterministic tie
+breaking against hand-calculated expectations, and verifies all 13 output
+artifacts. To inspect the generated fixture artifacts or test a safe rerun:
+
+```bash
+python scripts/verify_local_e2e.py --output-root outputs/e2e-test
+python scripts/verify_local_e2e.py --output-root outputs/e2e-test
+```
+
+The local verifier supplements, but does not replace, the documented clean
+Docker build, live Nginx header-forwarding check, and Hadoop-container run.
