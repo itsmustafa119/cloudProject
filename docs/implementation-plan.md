@@ -183,6 +183,10 @@ final run.
 
 ## Step 12 - Documentation and PDF report
 
+Status: Complete documentation, report source, evidence checklist, and
+visually verified draft PDF are implemented. Live screenshots, final-run
+results, and team identification require the Docker run and student details.
+
 - Complete the README with architecture, prerequisites, commands, output
   meanings, assumptions, and clean-rerun instructions.
 - Capture evidence of containers, Nginx requests, both log families, traffic
