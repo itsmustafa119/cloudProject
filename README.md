@@ -113,3 +113,21 @@ python scripts/verify_local_e2e.py --output-root outputs/e2e-test
 
 The local verifier supplements, but does not replace, the documented clean
 Docker build, live Nginx header-forwarding check, and Hadoop-container run.
+
+## Final data run
+
+On a machine with Docker and Docker Compose v2, execute the guarded final run:
+
+```bash
+bash scripts/run_final_data.sh --confirm-final-run
+```
+
+The explicit confirmation is required because this run stops the application
+stack and truncates the four known runtime logs. It then performs a clean
+application build, generates 100,000 requests through Nginx, validates
+request-level correlation, executes Hadoop Jobs 1-5, and cross-checks
+`summary.json` against every intermediate CSV. It leaves the containers,
+source logs, and analytical outputs in place for report evidence.
+
+Do not commit or submit fixture-generated data as the final dataset. The final
+logs and outputs must be created together by the guarded Docker run.

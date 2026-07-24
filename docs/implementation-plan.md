@@ -168,6 +168,10 @@ checkout.
 
 ## Step 11 - Final data run
 
+Status: Guarded final-run automation and cross-artifact verification complete;
+the genuine 100,000-request run requires a Docker-capable machine and must not
+be replaced with synthetic submission artifacts.
+
 - Safely clear previous runtime logs and start the stack.
 - Generate at least 100,000 requests through Nginx.
 - Run the Hadoop pipeline and verify the final summary against intermediate
